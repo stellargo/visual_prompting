@@ -144,7 +144,7 @@ def main():
     template = 'This is a photo of a {}'
     print(f'template: {template}')
 
-    cifar_train_dataset = CIFAR100("/",
+    cifar_train_dataset = CIFAR100(args.root, transform=preprocess,
                              download=True, train=True)
 
     # val_dataset = CIFAR100(args.root, transform=preprocess,

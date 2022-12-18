@@ -266,16 +266,17 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
         images = images.to(device)
         target = target.to(device)
         text_tokens = clip.tokenize(texts).to(device)
-        continue
+        
         # with automatic mixed precision
         with autocast():
             prompted_images = prompter(images)
             output, _ = model(prompted_images, text_tokens)
+            continue
             loss = criterion(output, target)
             scaler.scale(loss).backward()
             scaler.step(optimizer)
         scaler.update()
-
+        
         # Note: we clamp to 4.6052 = ln(100), as in the original paper.
         model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
 

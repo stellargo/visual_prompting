@@ -15,6 +15,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torchvision.datasets import CIFAR100
 
+
 from models import prompters
 from utils import accuracy, AverageMeter, ProgressMeter, save_checkpoint, cosine_lr, refine_classname
 
@@ -48,7 +49,7 @@ def parse_option():
 
     # model
     parser.add_argument('--model', type=str, default=None,
-                        choices=['rn50', 'instagram_resnext101_32x8d', 'bit_m_rn50'],
+                        choices=['rn50', 'instagram_resnext101_32x8d', 'bit_m_rn50', 'cifar_rn50'],
                         help='choose pre-trained model')
     parser.add_argument('--method', type=str, default='padding',
                         choices=['padding', 'random_patch', 'fixed_patch'],
@@ -127,6 +128,8 @@ def main():
         model = bit_models.KNOWN_MODELS['BiT-M-R50x1'](zero_head=True)
         model.load_from(np.load('BiT-M-R50x1.npz'))
         model = model.to(device)
+    elif args.model == 'cifar_rn50':
+        model = torch.load("https://github.com/chenyaofo/pytorch-cifar-models/releases/download/resnet/cifar100_resnet56-f2eff4c8.pt")
 
     model.eval()
 
@@ -167,6 +170,8 @@ def main():
 
     val_dataset = CIFAR100(args.root, transform=preprocess,
                            download=True, train=False)
+
+    train
 
     train_loader = DataLoader(train_dataset,
                               batch_size=args.batch_size, pin_memory=True,

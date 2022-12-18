@@ -114,7 +114,7 @@ def main():
 
     # create model
     model, preprocess = clip.load('ViT-B/32', device, jit=False)
-    convert_models_to_fp32(model)
+    # convert_models_to_fp32(model)
     model.eval()
 
     prompter = prompters.__dict__[args.method](args).to(device)
@@ -268,14 +268,16 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
         text_tokens = clip.tokenize(texts).to(device)
         
         # with automatic mixed precision
-        # with autocast():
-        prompted_images = prompter(images)
-        
-        output, _ = model(prompted_images, text_tokens)
-        continue
-        loss = criterion(output, target)
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
+        with autocast():
+            prompted_images = prompter(images)
+            
+            output, _ = model(prompted_images, text_tokens)
+            print("Sleeping")
+            time.sleep(10)
+            continue
+            loss = criterion(output, target)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
         scaler.update()
         
         # Note: we clamp to 4.6052 = ln(100), as in the original paper.

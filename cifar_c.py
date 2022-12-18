@@ -61,8 +61,6 @@ def parse_option():
     # dataset
     parser.add_argument('--root', type=str, default='./data',
                         help='dataset')
-    parser.add_argument('--model_load_path', type=str, default='./data',
-                        help='dataset')
     parser.add_argument('--dataset', type=str, default='cifar100',
                         help='dataset')
     parser.add_argument('--image_size', type=int, default=224,
@@ -116,10 +114,6 @@ def main():
 
     # create model
     model, preprocess = clip.load('ViT-B/32', device, jit=False)
-
-    checkpoint = torch.load(args.model_load_path)
-    model.load_state_dict(checkpoint['model_state_dict'])
-
     convert_models_to_fp32(model)
     model.eval()
 
@@ -211,51 +205,40 @@ def main():
         wandb.run.name = args.filename
         wandb.watch(prompter, criterion, log='all', log_freq=10)
 
-    # Load cifar-100-c
-
-    types = []
-
-    for type in types:
-        data-cifar-c = np.load()
-
-    # Get accuracy
-
-    # if args.evaluate:
-    #     acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
-    #     return
+    if args.evaluate:
+        acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
+        return
 
     epochs_since_improvement = 0
 
-    # for epoch in range(args.epochs):
+    for epoch in range(args.epochs):
 
         # train for one epoch
-        # train(combined_train_dataloader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
+        train(combined_train_dataloader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
 
         # # evaluate on validation set
-        # acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
-
-
+        acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
 
         # remember best acc@1 and save checkpoint
-        # is_best = acc1 > best_acc1
-        # best_acc1 = max(acc1, best_acc1)
-        #
-        # save_checkpoint({
-        #     'epoch': epoch + 1,
-        #     'state_dict': prompter.state_dict(),
-        #     'best_acc1': best_acc1,
-        #     'optimizer': optimizer.state_dict(),
-        # }, args, is_best=is_best)
-        #
-        # if is_best:
-        #     epochs_since_improvement = 0
-        # else:
-        #     epochs_since_improvement += 1
-        #     print(f"There's no improvement for {epochs_since_improvement} epochs.")
-        #
-        #     if epochs_since_improvement >= args.patience:
-        #         print("The training halted by early stopping criterion.")
-        #         break
+        is_best = acc1 > best_acc1
+        best_acc1 = max(acc1, best_acc1)
+
+        save_checkpoint({
+            'epoch': epoch + 1,
+            'state_dict': prompter.state_dict(),
+            'best_acc1': best_acc1,
+            'optimizer': optimizer.state_dict(),
+        }, args, is_best=is_best)
+
+        if is_best:
+            epochs_since_improvement = 0
+        else:
+            epochs_since_improvement += 1
+            print(f"There's no improvement for {epochs_since_improvement} epochs.")
+
+            if epochs_since_improvement >= args.patience:
+                print("The training halted by early stopping criterion.")
+                break
 
     wandb.run.finish()
 

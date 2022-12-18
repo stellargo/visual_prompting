@@ -6,6 +6,7 @@ from tqdm import tqdm
 import time
 import random
 import wandb
+import numpy as np
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -87,6 +88,10 @@ def parse_option():
     parser.add_argument('--use_wandb', default=False,
                         action="store_true",
                         help='whether to use wandb')
+    parser.add_argument('--cifar_c_path', type=str, default='./save/models',
+                        help='path to save models')
+    parser.add_argument('--model_saved_path', type=str, default='./save/models',
+                        help='path to save models')
 
     args = parser.parse_args()
 
@@ -114,6 +119,8 @@ def main():
 
     # create model
     model, preprocess = clip.load('ViT-B/32', device, jit=False)
+    checkpoint = torch.load(args.model_saved_path)
+    model.load_state_dict(checkpoint['model_state_dict'])
     convert_models_to_fp32(model)
     model.eval()
 
@@ -211,166 +218,202 @@ def main():
 
     epochs_since_improvement = 0
 
-    for epoch in range(args.epochs):
+    validate(combined_val_dataloader, texts, model, prompter, criterion, args)
+
+    # for epoch in range(args.epochs):
 
         # train for one epoch
-        train(combined_train_dataloader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
+        # train(combined_train_dataloader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
 
         # # evaluate on validation set
-        acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
+        # validate(combined_val_dataloader, texts, model, prompter, criterion, args)
 
         # remember best acc@1 and save checkpoint
-        is_best = acc1 > best_acc1
-        best_acc1 = max(acc1, best_acc1)
-
-        save_checkpoint({
-            'epoch': epoch + 1,
-            'state_dict': prompter.state_dict(),
-            'best_acc1': best_acc1,
-            'optimizer': optimizer.state_dict(),
-        }, args, is_best=is_best)
-
-        if is_best:
-            epochs_since_improvement = 0
-        else:
-            epochs_since_improvement += 1
-            print(f"There's no improvement for {epochs_since_improvement} epochs.")
-
-            if epochs_since_improvement >= args.patience:
-                print("The training halted by early stopping criterion.")
-                break
+        # is_best = acc1 > best_acc1
+        # best_acc1 = max(acc1, best_acc1)
+        #
+        # save_checkpoint({
+        #     'epoch': epoch + 1,
+        #     'state_dict': prompter.state_dict(),
+        #     'best_acc1': best_acc1,
+        #     'optimizer': optimizer.state_dict(),
+        # }, args, is_best=is_best)
+        #
+        # if is_best:
+        #     epochs_since_improvement = 0
+        # else:
+        #     epochs_since_improvement += 1
+        #     print(f"There's no improvement for {epochs_since_improvement} epochs.")
+        #
+        #     if epochs_since_improvement >= args.patience:
+        #         print("The training halted by early stopping criterion.")
+        #         break
 
     wandb.run.finish()
 
 
-def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args):
-    batch_time = AverageMeter('Time', ':6.3f')
-    data_time = AverageMeter('Data', ':6.3f')
-    losses = AverageMeter('Loss', ':.4e')
-    top1 = AverageMeter('Acc@1', ':6.2f')
-    progress = ProgressMeter(
-        len(train_loader),
-        [batch_time, data_time, losses, top1],
-        prefix="Epoch: [{}]".format(epoch))
-
-    # switch to train mode
-    prompter.train()
-
-    num_batches_per_epoch = len(train_loader)
-
-    end = time.time()
-    for i, (images, target) in enumerate(tqdm(train_loader)):
-        # print(images.shape)
-
-        # measure data loading time
-        data_time.update(time.time() - end)
-
-        # adjust learning rate
-        step = num_batches_per_epoch * epoch + i
-        scheduler(step)
-
-        optimizer.zero_grad()
-
-        images = images.to(device)
-        target = target.to(device)
-        text_tokens = clip.tokenize(texts).to(device)
-
-        # with automatic mixed precision
-        with autocast():
-            prompted_images = prompter(images)
-
-            output, _ = model(prompted_images, text_tokens)
-            # print("Sleeping")
-            # time.sleep(10)
-            # continue
-            loss = criterion(output, target)
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
-        scaler.update()
-
-        # Note: we clamp to 4.6052 = ln(100), as in the original paper.
-        model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
-
-        # measure accuracy
-        acc1 = accuracy(output, target, topk=(1,))
-        losses.update(loss.item(), images.size(0))
-        top1.update(acc1[0].item(), images.size(0))
-
-        # measure elapsed time
-        batch_time.update(time.time() - end)
-        end = time.time()
-
-        if i % args.print_freq == 0:
-            progress.display(i)
-
-            if args.use_wandb:
-                wandb.log({
-                    'training_loss': losses.avg,
-                    'training_acc': top1.avg
-                })
-
-        if i % args.save_freq == 0:
-            save_checkpoint({
-                'epoch': epoch + 1,
-                'state_dict': prompter.state_dict(),
-                'best_acc1': best_acc1,
-                'optimizer': optimizer.state_dict(),
-            }, args)
-
-    return losses.avg, top1.avg
+# def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args):
+#     batch_time = AverageMeter('Time', ':6.3f')
+#     data_time = AverageMeter('Data', ':6.3f')
+#     losses = AverageMeter('Loss', ':.4e')
+#     top1 = AverageMeter('Acc@1', ':6.2f')
+#     progress = ProgressMeter(
+#         len(train_loader),
+#         [batch_time, data_time, losses, top1],
+#         prefix="Epoch: [{}]".format(epoch))
+#
+#     # switch to train mode
+#     prompter.train()
+#
+#     num_batches_per_epoch = len(train_loader)
+#
+#     end = time.time()
+#     for i, (images, target) in enumerate(tqdm(train_loader)):
+#         # print(images.shape)
+#
+#         # measure data loading time
+#         data_time.update(time.time() - end)
+#
+#         # adjust learning rate
+#         step = num_batches_per_epoch * epoch + i
+#         scheduler(step)
+#
+#         optimizer.zero_grad()
+#
+#         images = images.to(device)
+#         target = target.to(device)
+#         text_tokens = clip.tokenize(texts).to(device)
+#
+#         # with automatic mixed precision
+#         with autocast():
+#             prompted_images = prompter(images)
+#
+#             output, _ = model(prompted_images, text_tokens)
+#             # print("Sleeping")
+#             # time.sleep(10)
+#             # continue
+#             loss = criterion(output, target)
+#             scaler.scale(loss).backward()
+#             scaler.step(optimizer)
+#         scaler.update()
+#
+#         # Note: we clamp to 4.6052 = ln(100), as in the original paper.
+#         model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
+#
+#         # measure accuracy
+#         acc1 = accuracy(output, target, topk=(1,))
+#         losses.update(loss.item(), images.size(0))
+#         top1.update(acc1[0].item(), images.size(0))
+#
+#         # measure elapsed time
+#         batch_time.update(time.time() - end)
+#         end = time.time()
+#
+#         if i % args.print_freq == 0:
+#             progress.display(i)
+#
+#             if args.use_wandb:
+#                 wandb.log({
+#                     'training_loss': losses.avg,
+#                     'training_acc': top1.avg
+#                 })
+#
+#         if i % args.save_freq == 0:
+#             save_checkpoint({
+#                 'epoch': epoch + 1,
+#                 'state_dict': prompter.state_dict(),
+#                 'best_acc1': best_acc1,
+#                 'optimizer': optimizer.state_dict(),
+#             }, args)
+#
+#     return losses.avg, top1.avg
 
 
 def validate(val_loader, texts, model, prompter, criterion, args):
-    batch_time = AverageMeter('Time', ':6.3f')
-    losses = AverageMeter('Loss', ':.4e')
-    top1_org = AverageMeter('Original Acc@1', ':6.2f')
-    top1_prompt = AverageMeter('Prompt Acc@1', ':6.2f')
-    progress = ProgressMeter(
-        len(val_loader),
-        [batch_time, losses, top1_org, top1_prompt],
-        prefix='Validate: ')
 
-    # switch to evaluation mode
-    prompter.eval()
+    corruptions = ["brightness", "contrast", "defocus_blur", "elastic_transform", "fog", "frost", "gaussian_blur", "gaussian_noise", "glass_blur", "impulse_noise", "jpeg_compression", "motion_blur", "pixelate", "saturate", "shot_noise", "snow", "spatter", "speckle_noise", "zoom_blur"]
 
     with torch.no_grad():
-        end = time.time()
-        for i, (images, target) in enumerate(tqdm(val_loader)):
+        targets = np.load(args.cifar_c_path + '/labels.npy')
 
-            images = images.to(device)
-            target = target.to(device)
-            text_tokens = clip.tokenize(texts).to(device)
-            prompted_images = prompter(images)
+        for corruption in corruptions:
+            data_cifar = np.load(args.cifar_c + '/' + corruption + '.npy')
 
-            # compute output
-            output_prompt, _ = model(prompted_images, text_tokens)
-            output_org, _ = model(images, text_tokens)
-            loss = criterion(output_prompt, target)
+            for i in range(0, 5):
+                print("Evaluating corruption and level : ", corruption, i)
 
-            # measure accuracy and record loss
-            acc1 = accuracy(output_prompt, target, topk=(1,))
-            losses.update(loss.item(), images.size(0))
-            top1_prompt.update(acc1[0].item(), images.size(0))
+                top1_org = AverageMeter('Original Acc@1', ':6.2f')
+                top1_prompt = AverageMeter('Prompt Acc@1', ':6.2f')
+                top5_org = AverageMeter('Original Acc@5', ':6.2f')
+                top5_prompt = AverageMeter('Prompt Acc@5', ':6.2f')
+                ProgressMeter(len(val_loader), [top1_org, top1_prompt, top5_org, top5_prompt], prefix='Validate: ')
 
-            acc1 = accuracy(output_org, target, topk=(1,))
-            top1_org.update(acc1[0].item(), images.size(0))
+                # switch to evaluation mode
+                prompter.eval()
 
-            # measure elapsed time
-            batch_time.update(time.time() - end)
-            end = time.time()
+                for j in range(i*10000, (i+1)*10000):
+                    image = data_cifar[j].to(device)
+                    target = targets[j]
+                    text_tokens = clip.tokenize(texts).to(device)
+                    prompted_image = prompter(image)
 
-            if i % args.print_freq == 0:
-                progress.display(i)
+                    output_prompt, _ = model(prompted_image, text_tokens)
+                    output_org, _ = model(image, text_tokens)
 
-        print(' * Prompt Acc@1 {top1_prompt.avg:.3f} Original Acc@1 {top1_org.avg:.3f}'
-              .format(top1_prompt=top1_prompt, top1_org=top1_org))
+                    # measure accuracy and record loss
+                    acc1 = accuracy(output_prompt, target, topk=(1,))
+                    top1_prompt.update(acc1[0].item(), 1)
 
-        if args.use_wandb:
-            wandb.log({
-                'val_loss': losses.avg,
-                'val_acc_prompt': top1_prompt.avg,
-                'val_acc_org': top1_org.avg,
-            })
+                    acc5 = accuracy(output_prompt, target, topk=(5,))
+                    top5_prompt.update(acc5[0].item(), 1)
+
+                    acc1 = accuracy(output_org, target, topk=(1,))
+                    top1_org.update(acc1[0].item(), 1)
+
+                    acc5 = accuracy(output_org, target, topk=(5,))
+                    top5_org.update(acc5[0].item(), 1)
+
+                print(' * Prompt Acc@1 {top1_prompt.avg:.3f} Original Acc@1 {top1_org.avg:.3f} Prompt Acc@5 {top5_prompt.avg:.3f} Original Acc@5 {top5_org.avg:.3f}'.format(
+                    top1_prompt=top1_prompt, top1_org=top1_org, top5_prompt=top5_prompt, top5_org=top5_org))
+
+
+
+
+        # for i, (images, target) in enumerate(tqdm(val_loader)):
+        #
+        #     images = images.to(device)
+        #     target = target.to(device)
+        #     text_tokens = clip.tokenize(texts).to(device)
+        #     prompted_images = prompter(images)
+        #
+        #     # compute output
+        #     output_prompt, _ = model(prompted_images, text_tokens)
+        #     output_org, _ = model(images, text_tokens)
+        #     loss = criterion(output_prompt, target)
+        #
+        #     # measure accuracy and record loss
+        #     acc1 = accuracy(output_prompt, target, topk=(1,))
+        #     losses.update(loss.item(), images.size(0))
+        #     top1_prompt.update(acc1[0].item(), images.size(0))
+        #
+        #     acc1 = accuracy(output_org, target, topk=(1,))
+        #     top1_org.update(acc1[0].item(), images.size(0))
+        #
+        #     # measure elapsed time
+        #     batch_time.update(time.time() - end)
+        #     end = time.time()
+        #
+        #     # if i % args.print_freq == 0:
+        #     #     progress.display(i)
+
+        # print(' * Prompt Acc@1 {top1_prompt.avg:.3f} Original Acc@1 {top1_org.avg:.3f}'.format(top1_prompt=top1_prompt, top1_org=top1_org))
+        #
+        # if args.use_wandb:
+        #     wandb.log({
+        #         'val_loss': losses.avg,
+        #         'val_acc_prompt': top1_prompt.avg,
+        #         'val_acc_org': top1_org.avg,
+        #     })
 
     return top1_prompt.avg
 

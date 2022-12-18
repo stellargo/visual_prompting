@@ -204,7 +204,7 @@ def main():
     epochs_since_improvement = 0
 
     for epoch in range(args.epochs):
-        pass
+        
         # train for one epoch
         train(train_loader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
 
@@ -268,14 +268,14 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
         text_tokens = clip.tokenize(texts).to(device)
         
         # with automatic mixed precision
-        with autocast():
-            prompted_images = prompter(images)
-            continue
-            output, _ = model(prompted_images, text_tokens)
-            
-            loss = criterion(output, target)
-            scaler.scale(loss).backward()
-            scaler.step(optimizer)
+        # with autocast():
+        prompted_images = prompter(images)
+        
+        output, _ = model(prompted_images, text_tokens)
+        continue
+        loss = criterion(output, target)
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
         scaler.update()
         
         # Note: we clamp to 4.6052 = ln(100), as in the original paper.

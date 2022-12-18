@@ -11,7 +11,8 @@ import torch
 import torch.backends.cudnn as cudnn
 from torch.cuda.amp import GradScaler, autocast
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR100
+from torchvision.datasets import CIFAR100, ImageFolder 
+import torchvision.transforms as transforms
 
 import clip
 from models import prompters

@@ -155,7 +155,7 @@ def main():
     val_dataset = ImageFolder(root = args.val_folder,
                                 transform= preprocess)
 
-
+    print(args.batch_size)
     # train_loader = DataLoader(train_dataset,
     #                           batch_size=args.batch_size, pin_memory=True,
     #                           num_workers=args.num_workers, shuffle=True)
@@ -163,6 +163,8 @@ def main():
     # val_loader = DataLoader(val_dataset,
     #                         batch_size=args.batch_size, pin_memory=True,
     #                         num_workers=args.num_workers, shuffle=False)
+    train_loader = None
+    val_loader = None
 
     class_names = train_dataset.classes
     class_names = refine_classname(class_names)
@@ -176,7 +178,8 @@ def main():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     scaler = GradScaler()
-    total_steps = len(train_loader) * args.epochs
+    # total_steps = len(train_loader) * args.epochs
+    total_steps = 1000
     scheduler = cosine_lr(optimizer, args.learning_rate, args.warmup, total_steps)
 
     cudnn.benchmark = True

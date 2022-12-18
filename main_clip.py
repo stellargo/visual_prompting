@@ -155,11 +155,11 @@ def main():
     val_dataset = ImageFolder(root = args.val_folder,
                                 transform= preprocess)
 
-    combined_train_dataset = torch.utils.data.TensorDataset(cifar_train_dataset, train_dataset)
+    combined_train_dataset = torch.utils.data.ConcatDataset([cifar_train_dataset, train_dataset])
     combined_train_dataloader = DataLoader(combined_train_dataset, batch_size=args.batch_size, pin_memory=True,
                               num_workers=args.num_workers, shuffle=True)
 
-    combined_val_dataset = torch.utils.data.TensorDataset(cifar_val_dataset, val_dataset)
+    combined_val_dataset = torch.utils.data.ConcatDataset([cifar_val_dataset, val_dataset])
     combined_val_dataloader = DataLoader(combined_val_dataset, batch_size=args.batch_size, pin_memory=True,
                             num_workers=args.num_workers, shuffle=False)
 

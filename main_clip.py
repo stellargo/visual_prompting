@@ -253,7 +253,7 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
     end = time.time()
     for i, (images, target) in enumerate(tqdm(train_loader)):
         print(images.shape)
-        continue
+        
         # measure data loading time
         data_time.update(time.time() - end)
 
@@ -266,7 +266,7 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
         images = images.to(device)
         target = target.to(device)
         text_tokens = clip.tokenize(texts).to(device)
-
+        continue
         # with automatic mixed precision
         with autocast():
             prompted_images = prompter(images)

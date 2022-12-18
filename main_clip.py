@@ -156,13 +156,13 @@ def main():
                                 transform= preprocess)
 
 
-    train_loader = DataLoader(train_dataset,
-                              batch_size=args.batch_size, pin_memory=True,
-                              num_workers=args.num_workers, shuffle=True)
+    # train_loader = DataLoader(train_dataset,
+    #                           batch_size=args.batch_size, pin_memory=True,
+    #                           num_workers=args.num_workers, shuffle=True)
 
-    val_loader = DataLoader(val_dataset,
-                            batch_size=args.batch_size, pin_memory=True,
-                            num_workers=args.num_workers, shuffle=False)
+    # val_loader = DataLoader(val_dataset,
+    #                         batch_size=args.batch_size, pin_memory=True,
+    #                         num_workers=args.num_workers, shuffle=False)
 
     class_names = train_dataset.classes
     class_names = refine_classname(class_names)
@@ -250,58 +250,58 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
     num_batches_per_epoch = len(train_loader)
 
     end = time.time()
-    # for i, (images, target) in enumerate(tqdm(train_loader)):
+    for i, (images, target) in enumerate(tqdm(train_loader)):
 
-    #     # measure data loading time
-    #     data_time.update(time.time() - end)
+        # measure data loading time
+        data_time.update(time.time() - end)
 
-    #     # adjust learning rate
-    #     step = num_batches_per_epoch * epoch + i
-    #     scheduler(step)
+        # adjust learning rate
+        step = num_batches_per_epoch * epoch + i
+        scheduler(step)
 
-    #     optimizer.zero_grad()
+        optimizer.zero_grad()
 
-    #     images = images.to(device)
-    #     target = target.to(device)
-    #     text_tokens = clip.tokenize(texts).to(device)
+        images = images.to(device)
+        target = target.to(device)
+        text_tokens = clip.tokenize(texts).to(device)
 
-    #     # with automatic mixed precision
-    #     with autocast():
-    #         prompted_images = prompter(images)
-    #         output, _ = model(prompted_images, text_tokens)
-    #         loss = criterion(output, target)
-    #         scaler.scale(loss).backward()
-    #         scaler.step(optimizer)
-    #     scaler.update()
+        # with automatic mixed precision
+        with autocast():
+            prompted_images = prompter(images)
+            output, _ = model(prompted_images, text_tokens)
+            loss = criterion(output, target)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+        scaler.update()
 
-    #     # Note: we clamp to 4.6052 = ln(100), as in the original paper.
-    #     model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
+        # Note: we clamp to 4.6052 = ln(100), as in the original paper.
+        model.logit_scale.data = torch.clamp(model.logit_scale.data, 0, 4.6052)
 
-    #     # measure accuracy
-    #     acc1 = accuracy(output, target, topk=(1,))
-    #     losses.update(loss.item(), images.size(0))
-    #     top1.update(acc1[0].item(), images.size(0))
+        # measure accuracy
+        acc1 = accuracy(output, target, topk=(1,))
+        losses.update(loss.item(), images.size(0))
+        top1.update(acc1[0].item(), images.size(0))
 
-    #     # measure elapsed time
-    #     batch_time.update(time.time() - end)
-    #     end = time.time()
+        # measure elapsed time
+        batch_time.update(time.time() - end)
+        end = time.time()
 
-    #     if i % args.print_freq == 0:
-    #         progress.display(i)
+        if i % args.print_freq == 0:
+            progress.display(i)
 
-    #         if args.use_wandb:
-    #             wandb.log({
-    #                 'training_loss': losses.avg,
-    #                 'training_acc': top1.avg
-    #                  })
+            if args.use_wandb:
+                wandb.log({
+                    'training_loss': losses.avg,
+                    'training_acc': top1.avg
+                     })
 
-    #     if i % args.save_freq == 0:
-    #         save_checkpoint({
-    #             'epoch': epoch + 1,
-    #             'state_dict': prompter.state_dict(),
-    #             'best_acc1': best_acc1,
-    #             'optimizer': optimizer.state_dict(),
-    #         }, args)
+        if i % args.save_freq == 0:
+            save_checkpoint({
+                'epoch': epoch + 1,
+                'state_dict': prompter.state_dict(),
+                'best_acc1': best_acc1,
+                'optimizer': optimizer.state_dict(),
+            }, args)
 
     return losses.avg, top1.avg
 

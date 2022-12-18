@@ -209,30 +209,30 @@ def main():
         train(train_loader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
 
         # # evaluate on validation set
-        # acc1 = validate(val_loader, texts, model, prompter, criterion, args)
+        acc1 = validate(val_loader, texts, model, prompter, criterion, args)
 
-        # # remember best acc@1 and save checkpoint
-        # is_best = acc1 > best_acc1
-        # best_acc1 = max(acc1, best_acc1)
+        # remember best acc@1 and save checkpoint
+        is_best = acc1 > best_acc1
+        best_acc1 = max(acc1, best_acc1)
 
-        # save_checkpoint({
-        #     'epoch': epoch + 1,
-        #     'state_dict': prompter.state_dict(),
-        #     'best_acc1': best_acc1,
-        #     'optimizer': optimizer.state_dict(),
-        # }, args, is_best=is_best)
+        save_checkpoint({
+            'epoch': epoch + 1,
+            'state_dict': prompter.state_dict(),
+            'best_acc1': best_acc1,
+            'optimizer': optimizer.state_dict(),
+        }, args, is_best=is_best)
 
-        # if is_best:
-        #     epochs_since_improvement = 0
-        # else:
-        #     epochs_since_improvement += 1
-        #     print(f"There's no improvement for {epochs_since_improvement} epochs.")
+        if is_best:
+            epochs_since_improvement = 0
+        else:
+            epochs_since_improvement += 1
+            print(f"There's no improvement for {epochs_since_improvement} epochs.")
 
-        #     if epochs_since_improvement >= args.patience:
-        #         print("The training halted by early stopping criterion.")
-        #         break
+            if epochs_since_improvement >= args.patience:
+                print("The training halted by early stopping criterion.")
+                break
 
-    # wandb.run.finish()
+    wandb.run.finish()
 
 
 def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args):
@@ -272,9 +272,9 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
             prompted_images = prompter(images)
             
             output, _ = model(prompted_images, text_tokens)
-            print("Sleeping")
-            time.sleep(10)
-            continue
+            # print("Sleeping")
+            # time.sleep(10)
+            # continue
             loss = criterion(output, target)
             scaler.scale(loss).backward()
             scaler.step(optimizer)

@@ -206,7 +206,7 @@ def main():
     for epoch in range(args.epochs):
         pass
         # train for one epoch
-        # train(train_loader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
+        train(train_loader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
 
         # # evaluate on validation set
         # acc1 = validate(val_loader, texts, model, prompter, criterion, args)
@@ -252,7 +252,8 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
 
     end = time.time()
     for i, (images, target) in enumerate(tqdm(train_loader)):
-
+        print(images.shape)
+        continue
         # measure data loading time
         data_time.update(time.time() - end)
 

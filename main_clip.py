@@ -46,6 +46,8 @@ def parse_option():
     parser.add_argument('--momentum', type=float, default=0.9,
                         help='momentum')
     parser.add_argument('--patience', type=int, default=1000)
+    parser.add_argument('--train_folder', type=str, help = "train folder path")
+    parser.add_argument('--val_folder', type=str, help = "val folder path")
 
     # model
     parser.add_argument('--model', type=str, default='clip')
@@ -141,11 +143,17 @@ def main():
     template = 'This is a photo of a {}'
     print(f'template: {template}')
 
-    train_dataset = CIFAR100(args.root, transform=preprocess,
-                             download=True, train=True)
+    # train_dataset = CIFAR100(args.root, transform=preprocess,
+    #                          download=True, train=True)
 
-    val_dataset = CIFAR100(args.root, transform=preprocess,
-                           download=True, train=False)
+    # val_dataset = CIFAR100(args.root, transform=preprocess,
+    #                        download=True, train=False)
+
+    train_dataset = ImageFolder(root = args.train_folder,
+                                transform= preprocess)
+    val_dataset = ImageFolder(root = args.val_folder,
+                                transform= preprocess)
+
 
     train_loader = DataLoader(train_dataset,
                               batch_size=args.batch_size, pin_memory=True,

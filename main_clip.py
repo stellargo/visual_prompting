@@ -114,7 +114,7 @@ def main():
 
     # create model
     model, preprocess = clip.load('ViT-B/32', device, jit=False)
-    # convert_models_to_fp32(model)
+    convert_models_to_fp32(model)
     model.eval()
 
     prompter = prompters.__dict__[args.method](args).to(device)
@@ -176,8 +176,8 @@ def main():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     scaler = GradScaler()
-    # total_steps = len(train_loader) * args.epochs
-    total_steps = 1000
+    total_steps = len(train_loader) * args.epochs
+    # total_steps = 1000
     scheduler = cosine_lr(optimizer, args.learning_rate, args.warmup, total_steps)
 
     cudnn.benchmark = True
@@ -197,9 +197,9 @@ def main():
         wandb.run.name = args.filename
         wandb.watch(prompter, criterion, log='all', log_freq=10)
 
-    # if args.evaluate:
-    #     acc1 = validate(val_loader, texts, model, prompter, criterion, args)
-    #     return
+    if args.evaluate:
+        acc1 = validate(val_loader, texts, model, prompter, criterion, args)
+        return
 
     epochs_since_improvement = 0
 
@@ -252,7 +252,7 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
 
     end = time.time()
     for i, (images, target) in enumerate(tqdm(train_loader)):
-        print(images.shape)
+        # print(images.shape)
         
         # measure data loading time
         data_time.update(time.time() - end)

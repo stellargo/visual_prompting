@@ -144,8 +144,8 @@ def main():
     template = 'This is a photo of a {}'
     print(f'template: {template}')
 
-    # train_dataset = CIFAR100(args.root, transform=preprocess,
-    #                          download=True, train=True)
+    cifar_train_dataset = CIFAR100("/",
+                             download=True, train=True)
 
     # val_dataset = CIFAR100(args.root, transform=preprocess,
     #                        download=True, train=False)
@@ -164,7 +164,7 @@ def main():
                             batch_size=args.batch_size, pin_memory=False,
                             num_workers=args.num_workers, shuffle=False)
 
-    class_names = train_dataset.classes
+    class_names = cifar_train_dataset.classes
     class_names = refine_classname(class_names)
     texts = [template.format(label) for label in class_names]
 

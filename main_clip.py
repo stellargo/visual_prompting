@@ -147,22 +147,33 @@ def main():
     cifar_train_dataset = CIFAR100(args.root, transform=preprocess,
                              download=True, train=True)
 
-    # val_dataset = CIFAR100(args.root, transform=preprocess,
-    #                        download=True, train=False)
+    cifar_val_dataset = CIFAR100(args.root, transform=preprocess,
+                           download=True, train=False)
 
     train_dataset = ImageFolder(root = args.train_folder,
                                 transform= preprocess)
     val_dataset = ImageFolder(root = args.val_folder,
                                 transform= preprocess)
 
-    print(args.batch_size)
-    train_loader = DataLoader(train_dataset,
-                              batch_size=args.batch_size, pin_memory=False,
+    combined_train_dataset = torch.utils.data.TensorDataset(cifar_train_dataset, train_dataset)
+    combined_train_dataloader = DataLoader(combined_train_dataset, batch_size=args.batch_size, pin_memory=True,
                               num_workers=args.num_workers, shuffle=True)
 
-    val_loader = DataLoader(val_dataset,
-                            batch_size=args.batch_size, pin_memory=False,
+    combined_val_dataset = torch.utils.data.TensorDataset(cifar_val_dataset, val_dataset)
+    combined_val_dataloader = DataLoader(combined_val_dataset, batch_size=args.batch_size, pin_memory=True,
                             num_workers=args.num_workers, shuffle=False)
+
+
+
+
+    # print(args.batch_size)
+    # train_loader = DataLoader(train_dataset,
+    #                           batch_size=args.batch_size, pin_memory=False,
+    #                           num_workers=args.num_workers, shuffle=True)
+    #
+    # val_loader = DataLoader(val_dataset,
+    #                         batch_size=args.batch_size, pin_memory=False,
+    #                         num_workers=args.num_workers, shuffle=False)
 
     class_names = cifar_train_dataset.classes
     class_names = refine_classname(class_names)
@@ -176,7 +187,7 @@ def main():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     scaler = GradScaler()
-    total_steps = len(train_loader) * args.epochs
+    total_steps = len(combined_train_dataloader) * args.epochs
     # total_steps = 1000
     scheduler = cosine_lr(optimizer, args.learning_rate, args.warmup, total_steps)
 
@@ -198,7 +209,7 @@ def main():
         wandb.watch(prompter, criterion, log='all', log_freq=10)
 
     if args.evaluate:
-        acc1 = validate(val_loader, texts, model, prompter, criterion, args)
+        acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
         return
 
     epochs_since_improvement = 0
@@ -206,10 +217,10 @@ def main():
     for epoch in range(args.epochs):
         
         # train for one epoch
-        train(train_loader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
+        train(combined_train_dataloader, texts, model, prompter, optimizer, scheduler, criterion, scaler, epoch, args)
 
         # # evaluate on validation set
-        acc1 = validate(val_loader, texts, model, prompter, criterion, args)
+        acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
 
         # remember best acc@1 and save checkpoint
         is_best = acc1 > best_acc1

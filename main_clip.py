@@ -270,8 +270,9 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
         # with automatic mixed precision
         with autocast():
             prompted_images = prompter(images)
-            output, _ = model(prompted_images, text_tokens)
             continue
+            output, _ = model(prompted_images, text_tokens)
+            
             loss = criterion(output, target)
             scaler.scale(loss).backward()
             scaler.step(optimizer)

@@ -13,7 +13,7 @@ import torch.backends.cudnn as cudnn
 import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR100
+from torchvision.datasets import CIFAR100, ImageFolder 
 
 
 from models import prompters
@@ -33,6 +33,8 @@ def parse_option():
                         help='num of workers to use')
     parser.add_argument('--epochs', type=int, default=1000,
                         help='number of training epoch5s')
+    parser.add_argument('--train_folder', type=str, help = "train folder path")
+    parser.add_argument('--val_folder', type=str, help = "val folder path")
 
     # optimization
     parser.add_argument('--optim', type=str, default='sgd',
@@ -165,13 +167,16 @@ def main():
                              std=[0.229, 0.224, 0.225])
     ])
 
-    train_dataset = CIFAR100(args.root, transform=preprocess,
-                             download=True, train=True)
+    # train_dataset = CIFAR100(args.root, transform=preprocess,
+    #                          download=True, train=True)
 
-    val_dataset = CIFAR100(args.root, transform=preprocess,
-                           download=True, train=False)
+    # val_dataset = CIFAR100(args.root, transform=preprocess,
+    #                        download=True, train=False)
 
-    train
+    train_dataset = ImageFolder(root = args.train_folder,
+                                transform= preprocess)
+    val_dataset = ImageFolder(root = args.val_folder,
+                                transform= preprocess)
 
     train_loader = DataLoader(train_dataset,
                               batch_size=args.batch_size, pin_memory=True,

@@ -129,7 +129,7 @@ def main():
         model.load_from(np.load('BiT-M-R50x1.npz'))
         model = model.to(device)
     elif args.model == 'cifar_rn50':
-        model = torch.load("models/cifar100_resnet56-f2eff4c8.pt")
+        model = torch.hub.load("chenyaofo/pytorch-cifar-models", "cifar100_resnet56", pretrained=True)
 
     model.eval()
 

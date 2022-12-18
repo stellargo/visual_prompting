@@ -156,15 +156,13 @@ def main():
                                 transform= preprocess)
 
     print(args.batch_size)
-    # train_loader = DataLoader(train_dataset,
-    #                           batch_size=args.batch_size, pin_memory=True,
-    #                           num_workers=args.num_workers, shuffle=True)
+    train_loader = DataLoader(train_dataset,
+                              batch_size=args.batch_size, pin_memory=False,
+                              num_workers=args.num_workers, shuffle=True)
 
-    # val_loader = DataLoader(val_dataset,
-    #                         batch_size=args.batch_size, pin_memory=True,
-    #                         num_workers=args.num_workers, shuffle=False)
-    train_loader = None
-    val_loader = None
+    val_loader = DataLoader(val_dataset,
+                            batch_size=args.batch_size, pin_memory=False,
+                            num_workers=args.num_workers, shuffle=False)
 
     class_names = train_dataset.classes
     class_names = refine_classname(class_names)

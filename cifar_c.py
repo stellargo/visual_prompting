@@ -120,11 +120,11 @@ def main():
     # create model
     model, preprocess = clip.load('ViT-B/32', device, jit=False)
     checkpoint = torch.load(args.model_saved_path)
-    model.load_state_dict(checkpoint['model_state_dict'])
     convert_models_to_fp32(model)
     model.eval()
 
     prompter = prompters.__dict__[args.method](args).to(device)
+    prompter.load_state_dict(checkpoint['state_dict'])
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -331,7 +331,9 @@ def main():
 
 def validate(val_loader, texts, model, prompter, criterion, args):
 
-    corruptions = ["brightness", "contrast", "defocus_blur", "elastic_transform", "fog", "frost", "gaussian_blur", "gaussian_noise", "glass_blur", "impulse_noise", "jpeg_compression", "motion_blur", "pixelate", "saturate", "shot_noise", "snow", "spatter", "speckle_noise", "zoom_blur"]
+    corruptions = ["brightness", "contrast", "defocus_blur", "elastic_transform", "fog", "frost", "gaussian_blur",
+                   "gaussian_noise", "glass_blur", "impulse_noise", "jpeg_compression", "motion_blur", "pixelate",
+                   "saturate", "shot_noise", "snow", "spatter", "speckle_noise", "zoom_blur"]
 
     with torch.no_grad():
         targets = np.load(args.cifar_c_path + '/labels.npy')

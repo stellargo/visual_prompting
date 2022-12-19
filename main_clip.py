@@ -276,6 +276,8 @@ def train(train_loader, texts, model, prompter, optimizer, scheduler, criterion,
 
         images = images.to(device)
         target = target.to(device)
+        print(images.shape)
+        print(target.shape)
         text_tokens = clip.tokenize(texts).to(device)
         
         # with automatic mixed precision

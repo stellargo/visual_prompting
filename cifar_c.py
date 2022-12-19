@@ -354,8 +354,10 @@ def validate(val_loader, texts, model, prompter, criterion, args):
                 prompter.eval()
 
                 for j in range(i*10000, (i+1)*10000):
-                    image = data_cifar[j].to(device)
-                    target = targets[j]
+                    image = torch.Tensor(np.expand_dims(data_cifar[j], axis=0)).to(device)
+                    target = torch.Tensor(np.expand_dims(targets[j], axis=0)).to(device)
+                    print(image.shape)
+                    print(target.shape)
                     text_tokens = clip.tokenize(texts).to(device)
                     prompted_image = prompter(image)
 

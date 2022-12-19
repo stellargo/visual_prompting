@@ -157,18 +157,18 @@ def main():
     cifar_val_dataset = CIFAR100(args.root, transform=preprocess,
                                  download=True, train=False)
 
-    train_dataset = ImageFolder(root=args.train_folder,
-                                transform=preprocess)
-    val_dataset = ImageFolder(root=args.val_folder,
-                              transform=preprocess)
-
-    combined_train_dataset = torch.utils.data.ConcatDataset([cifar_train_dataset, train_dataset])
-    combined_train_dataloader = DataLoader(combined_train_dataset, batch_size=args.batch_size, pin_memory=True,
-                                           num_workers=args.num_workers, shuffle=True)
-
-    combined_val_dataset = torch.utils.data.ConcatDataset([cifar_val_dataset, val_dataset])
-    combined_val_dataloader = DataLoader(combined_val_dataset, batch_size=args.batch_size, pin_memory=True,
-                                         num_workers=args.num_workers, shuffle=False)
+    # train_dataset = ImageFolder(root=args.train_folder,
+    #                             transform=preprocess)
+    # val_dataset = ImageFolder(root=args.val_folder,
+    #                           transform=preprocess)
+    #
+    # combined_train_dataset = torch.utils.data.ConcatDataset([cifar_train_dataset, train_dataset])
+    # combined_train_dataloader = DataLoader(combined_train_dataset, batch_size=args.batch_size, pin_memory=True,
+    #                                        num_workers=args.num_workers, shuffle=True)
+    #
+    # combined_val_dataset = torch.utils.data.ConcatDataset([cifar_val_dataset, val_dataset])
+    # combined_val_dataloader = DataLoader(combined_val_dataset, batch_size=args.batch_size, pin_memory=True,
+    #                                      num_workers=args.num_workers, shuffle=False)
 
     # print(args.batch_size)
     # train_loader = DataLoader(train_dataset,
@@ -191,9 +191,9 @@ def main():
 
     criterion = torch.nn.CrossEntropyLoss().to(device)
     scaler = GradScaler()
-    total_steps = len(combined_train_dataloader) * args.epochs
+    # total_steps = len(combined_train_dataloader) * args.epochs
     # total_steps = 1000
-    scheduler = cosine_lr(optimizer, args.learning_rate, args.warmup, total_steps)
+    # scheduler = cosine_lr(optimizer, args.learning_rate, args.warmup, total_steps)
 
     cudnn.benchmark = True
 
@@ -212,9 +212,9 @@ def main():
         wandb.run.name = args.filename
         wandb.watch(prompter, criterion, log='all', log_freq=10)
 
-    if args.evaluate:
-        acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
-        return
+    # if args.evaluate:
+    #     acc1 = validate(combined_val_dataloader, texts, model, prompter, criterion, args)
+    #     return
 
     epochs_since_improvement = 0
 
@@ -224,7 +224,7 @@ def main():
         transforms.Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
     ])
 
-    validate(combined_val_dataloader, texts, model, prompter, criterion, args, preprocess)
+    validate(texts, model, prompter, criterion, args, preprocess)
 
     # for epoch in range(args.epochs):
 
@@ -335,7 +335,7 @@ def main():
 #     return losses.avg, top1.avg
 
 
-def validate(val_loader, texts, model, prompter, criterion, args, preprocess):
+def validate(texts, model, prompter, criterion, args, preprocess):
 
     corruptions = ["brightness", "contrast", "defocus_blur", "elastic_transform", "fog", "frost", "gaussian_blur",
                    "gaussian_noise", "glass_blur", "impulse_noise", "jpeg_compression", "motion_blur", "pixelate",
@@ -354,7 +354,6 @@ def validate(val_loader, texts, model, prompter, criterion, args, preprocess):
                 top1_prompt = AverageMeter('Prompt Acc@1', ':6.2f')
                 top5_org = AverageMeter('Original Acc@5', ':6.2f')
                 top5_prompt = AverageMeter('Prompt Acc@5', ':6.2f')
-                ProgressMeter(len(val_loader), [top1_org, top1_prompt, top5_org, top5_prompt], prefix='Validate: ')
 
                 # switch to evaluation mode
                 prompter.eval()

@@ -218,6 +218,12 @@ def main():
 
     epochs_since_improvement = 0
 
+    preprocess = transforms.Compose([
+        transforms.Resize(size=224, interpolation="bicubic", max_size=None, antialias=None),
+        transforms.CenterCrop(size=(224, 224)),
+        transforms.Normalize(mean=(0.48145466, 0.4578275, 0.40821073), std=(0.26862954, 0.26130258, 0.27577711))
+    ])
+
     validate(combined_val_dataloader, texts, model, prompter, criterion, args, preprocess)
 
     # for epoch in range(args.epochs):

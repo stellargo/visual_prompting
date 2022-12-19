@@ -363,8 +363,6 @@ def validate(val_loader, texts, model, prompter, criterion, args, preprocess):
                     image = preprocess(
                         torch.Tensor(np.expand_dims(np.transpose(data_cifar[j], (2, 0, 1)), axis=0))).to(device)
                     target = torch.Tensor(np.expand_dims(targets[j], axis=0)).to(device)
-                    print(image.shape)
-                    print(target.shape)
                     text_tokens = clip.tokenize(texts).to(device)
                     prompted_image = prompter(image)
 

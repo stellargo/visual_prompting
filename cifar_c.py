@@ -359,28 +359,29 @@ def validate(val_loader, texts, model, prompter, criterion, args, preprocess):
                 # switch to evaluation mode
                 prompter.eval()
 
-                for j in tqdm(range(i*10000, (i+1)*10000)):
-                    image = preprocess(
-                        torch.Tensor(np.expand_dims(np.transpose(data_cifar[j], (2, 0, 1)), axis=0))).to(device)
-                    target = torch.Tensor(np.expand_dims(targets[j], axis=0)).to(device)
+                for j in tqdm(range(i*10000, (i+1)*10000, args.batch_size)):
+                    images = preprocess(torch.Tensor(np.transpose(data_cifar[j:j+args.batch_size], (0, 3, 1, 2)), axis=0)).to(device)
+                    target = torch.Tensor(targets[j:j+args.batch_size], axis=0).to(device)
+                    print(images.shape)
+                    print(target.shape)
                     text_tokens = clip.tokenize(texts).to(device)
-                    prompted_image = prompter(image)
+                    prompted_images = prompter(images)
 
-                    output_prompt, _ = model(prompted_image, text_tokens)
-                    output_org, _ = model(image, text_tokens)
+                    output_prompt, _ = model(prompted_images, text_tokens)
+                    output_org, _ = model(images, text_tokens)
 
                     # measure accuracy and record loss
                     acc1 = accuracy(output_prompt, target, topk=(1,))
-                    top1_prompt.update(acc1[0].item(), 1)
+                    top1_prompt.update(acc1[0].item(), images.size(0))
 
                     acc5 = accuracy(output_prompt, target, topk=(5,))
-                    top5_prompt.update(acc5[0].item(), 1)
+                    top5_prompt.update(acc5[0].item(), images.size(0))
 
                     acc1 = accuracy(output_org, target, topk=(1,))
-                    top1_org.update(acc1[0].item(), 1)
+                    top1_org.update(acc1[0].item(), images.size(0))
 
                     acc5 = accuracy(output_org, target, topk=(5,))
-                    top5_org.update(acc5[0].item(), 1)
+                    top5_org.update(acc5[0].item(), images.size(0))
 
                 print(' * Prompt Acc@1 {top1_prompt.avg:.3f} Original Acc@1 {top1_org.avg:.3f} Prompt Acc@5 {top5_prompt.avg:.3f} Original Acc@5 {top5_org.avg:.3f}'.format(
                     top1_prompt=top1_prompt, top1_org=top1_org, top5_prompt=top5_prompt, top5_org=top5_org))

@@ -354,7 +354,7 @@ def validate(val_loader, texts, model, prompter, criterion, args):
                 prompter.eval()
 
                 for j in range(i*10000, (i+1)*10000):
-                    image = torch.Tensor(np.expand_dims(data_cifar[j], axis=0)).to(device)
+                    image = torch.Tensor(np.expand_dims(np.transpose(data_cifar[j], (1, 2, 0)), axis=0)).to(device)
                     target = torch.Tensor(np.expand_dims(targets[j], axis=0)).to(device)
                     print(image.shape)
                     print(target.shape)

@@ -361,7 +361,7 @@ def validate(val_loader, texts, model, prompter, criterion, args, preprocess):
 
                 for j in tqdm(range(i*10000, (i+1)*10000, args.batch_size)):
                     images = preprocess(torch.Tensor(np.transpose(data_cifar[j:j+args.batch_size], (0, 3, 1, 2)))).to(device)
-                    target = torch.Tensor(targets[j:j+args.batch_size], axis=0).to(device)
+                    target = torch.Tensor(targets[j:j+args.batch_size]).to(device)
                     print(images.shape)
                     print(target.shape)
                     text_tokens = clip.tokenize(texts).to(device)

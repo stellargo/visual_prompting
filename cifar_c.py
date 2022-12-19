@@ -218,7 +218,7 @@ def main():
 
     epochs_since_improvement = 0
 
-    validate(combined_val_dataloader, texts, model, prompter, criterion, args)
+    validate(combined_val_dataloader, texts, model, prompter, criterion, args, preprocess)
 
     # for epoch in range(args.epochs):
 
@@ -329,7 +329,7 @@ def main():
 #     return losses.avg, top1.avg
 
 
-def validate(val_loader, texts, model, prompter, criterion, args):
+def validate(val_loader, texts, model, prompter, criterion, args, preprocess):
 
     corruptions = ["brightness", "contrast", "defocus_blur", "elastic_transform", "fog", "frost", "gaussian_blur",
                    "gaussian_noise", "glass_blur", "impulse_noise", "jpeg_compression", "motion_blur", "pixelate",
@@ -354,7 +354,8 @@ def validate(val_loader, texts, model, prompter, criterion, args):
                 prompter.eval()
 
                 for j in range(i*10000, (i+1)*10000):
-                    image = torch.Tensor(np.expand_dims(np.transpose(data_cifar[j], (2, 0, 1)), axis=0)).to(device)
+                    image = preprocess(
+                        torch.Tensor(np.expand_dims(np.transpose(data_cifar[j], (2, 0, 1)), axis=0))).to(device)
                     target = torch.Tensor(np.expand_dims(targets[j], axis=0)).to(device)
                     print(image.shape)
                     print(target.shape)

@@ -339,7 +339,7 @@ def validate(val_loader, texts, model, prompter, criterion, args):
         targets = np.load(args.cifar_c_path + '/labels.npy')
 
         for corruption in corruptions:
-            data_cifar = np.load(args.cifar_c + '/' + corruption + '.npy')
+            data_cifar = np.load(args.cifar_c_path + '/' + corruption + '.npy')
 
             for i in range(0, 5):
                 print("Evaluating corruption and level : ", corruption, i)
